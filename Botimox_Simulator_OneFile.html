@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Botimox — Universal Launcher Simulator</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#0f1631; --glass:#121a3aee; --edge:#2f3aa5; --text:#dbe4ff; --muted:#9fb1ff;
+  --accent:#7aa2ff; --glow:0 0 24px rgba(122,162,255,.35), inset 0 0 24px rgba(122,162,255,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:radial-gradient(1200px 600px at 70% -10%,#182062 0%,transparent 60%),linear-gradient(180deg,#070a17,#0b1020);color:var(--text)}
+.container{max-width:1100px;margin:40px auto;padding:0 18px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.brand{display:flex;gap:12px;align-items:center}
+.badge{padding:6px 10px;border:1px solid var(--edge);border-radius:999px;background:linear-gradient(135deg,#1b2458aa,#0f1631cc);box-shadow:var(--glow);font-size:12px;color:var(--muted)}
+.h1{font-size:30px;color:#9fafff;margin:0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.tab{padding:10px 14px;border:1px solid var(--edge);border-radius:12px;background:linear-gradient(135deg,#1b2458aa,#0f1631cc);color:#cfe0ff;cursor:pointer;box-shadow:var(--glow);user-select:none}
+.tab.active{background:linear-gradient(135deg,#2a3799,#1b2350);color:#fff}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+.card{border:1px solid var(--edge);border-radius:18px;background:linear-gradient(135deg,#1b2350aa,#0c1437e8);box-shadow:var(--glow);padding:16px}
+.card h3{margin:0 0 10px;color:#b9c6ff}
+.row{display:flex;gap:12px;align-items:center;margin:8px 0}
+label{font-size:12px;color:var(--muted);min-width:120px}
+input[type=range]{width:100%}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.kvc{border:1px dashed #2f3aa5;padding:10px;border-radius:12px;background:#0e1534aa}
+.kvc h4{margin:0 0 6px;color:#cdd9ff;font-size:13px}
+.kv p{margin:0;font-size:12px;color:#ced8ff}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{font-size:12px;padding:8px 10px;border-radius:999px;border:1px solid var(--edge);background:#18215b;cursor:pointer;color:#d8e3ff}
+.console{height:160px;overflow:auto;border:1px solid var(--edge);border-radius:14px;background:#0a1130;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;color:#cde0ff}
+.btn{padding:12px 16px;border-radius:12px;border:1px solid var(--edge);background:#2a3799;color:#fff;cursor:pointer;box-shadow:var(--glow)}
+.btn.secondary{background:#172055}
+.footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}
+hr{border:none;height:1px;background:linear-gradient(90deg,transparent,#2f3aa5,transparent);margin:10px 0}
+.small{font-size:11px;color:#9fb1ff}
+.sliderVal{width:42px;text-align:right;color:#cfe0ff;font-size:12px}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="badge">BOTIMOX</div>
+        <h1 class="h1">Universal Launcher — Simulator</h1>
+      </div>
+      <div class="badge">Prototype • All outputs simulated</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="play">Play</div>
+      <div class="tab" data-tab="create">Create</div>
+      <div class="tab" data-tab="hybrid">Hybrid</div>
+      <div class="tab" data-tab="ai">AI Console</div>
+    </div>
+
+    <div id="panel-play" class="grid panel">
+      <div class="card">
+        <h3>Performance Setup</h3>
+        <div class="row"><label>CPU (Cores)</label><input id="cpu" type="range" min="4" max="64" value="16" oninput="syncVal('cpuVal',this.value)"><span id="cpuVal" class="sliderVal">16</span></div>
+        <div class="row"><label>GPU (TFLOPS)</label><input id="gpu" type="range" min="5" max="120" value="35" oninput="syncVal('gpuVal',this.value)"><span id="gpuVal" class="sliderVal">35</span></div>
+        <div class="row"><label>Memory (GB)</label><input id="ram" type="range" min="8" max="128" value="32" oninput="syncVal('ramVal',this.value)"><span id="ramVal" class="sliderVal">32</span></div>
+        <div class="row"><label>Ray Tracing</label><input id="rt" type="checkbox" checked><span class="small">On</span></div>
+        <div class="row"><label>AI Boost</label><input id="ai" type="checkbox" checked><span class="small">On</span></div>
+        <hr>
+        <div class="row" style="justify-content:flex-end;gap:10px">
+          <button class="btn secondary" onclick="randomize()">Randomize</button>
+          <button class="btn" onclick="predict()">Predict FPS & Thermals</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Predicted Outcome</h3>
+        <div class="kv">
+          <div class="kvc"><h4>FPS (1080p Ultra)</h4><p id="fps">—</p></div>
+          <div class="kvc"><h4>Thermals (°C)</h4><p id="therm">—</p></div>
+          <div class="kvc"><h4>Power (W)</h4><p id="power">—</p></div>
+          <div class="kvc"><h4>Latency (ms)</h4><p id="lat">—</p></div>
+        </div>
+        <div class="badges" id="notes"></div>
+      </div>
+    </div>
+
+    <div id="panel-create" class="grid panel" style="display:none">
+      <div class="card">
+        <h3>Project Setup</h3>
+        <div class="row"><label>Template</label>
+          <select id="template">
+            <option>AAA Open-World</option>
+            <option>Racing Sim</option>
+            <option>Hero Shooter</option>
+            <option>Indie Platformer</option>
+            <option>Film Virtual Set</option>
+          </select>
+        </div>
+        <div class="row"><label>Target Platform</label>
+          <select id="target">
+            <option>PC</option>
+            <option>Console</option>
+            <option>Mobile</option>
+            <option>TV</option>
+            <option>Car</option>
+          </select>
+        </div>
+        <div class="row"><label>Visual Fidelity</label><input id="fidelity" type="range" min="1" max="10" value="8" oninput="syncVal('fidVal',this.value)"><span id="fidVal" class="sliderVal">8</span></div>
+        <div class="row" style="justify-content:flex-end;gap:10px">
+          <button class="btn secondary" onclick="consoleLog('create','Scaffold prepared')">Log</button>
+          <button class="btn" onclick="scaffold()">Scaffold Project</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Scaffold Preview</h3>
+        <div class="console" id="createLog"></div>
+      </div>
+    </div>
+
+    <div id="panel-hybrid" class="grid panel" style="display:none">
+      <div class="card">
+        <h3>Hybrid Run (Play + Create)</h3>
+        <div class="row"><label>Scene Complexity</label><input id="scene" type="range" min="1" max="10" value="6" oninput="syncVal('sceneVal',this.value)"><span id="sceneVal" class="sliderVal">6</span></div>
+        <div class="row"><label>NPC AI Level</label><input id="npc" type="range" min="1" max="10" value="7" oninput="syncVal('npcVal',this.value)"><span id="npcVal" class="sliderVal">7</span></div>
+        <div class="row"><label>Network Mode</label>
+          <select id="net">
+            <option>Offline</option>
+            <option>LAN</option>
+            <option>Cloud Assist</option>
+          </select>
+        </div>
+        <div class="row" style="justify-content:flex-end;gap:10px">
+          <button class="btn secondary" onclick="consoleLog('hybrid','Profiling…')">Profile</button>
+          <button class="btn" onclick="hybrid()">Run Hybrid</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Hybrid Results</h3>
+        <div class="kv">
+          <div class="kvc"><h4>Build Time (s)</h4><p id="build">—</p></div>
+          <div class="kvc"><h4>Runtime FPS</h4><p id="hfps">—</p></div>
+          <div class="kvc"><h4>GPU Util (%)</h4><p id="gutil">—</p></div>
+          <div class="kvc"><h4>Quality Index</h4><p id="qix">—</p></div>
+        </div>
+        <div class="console" id="hybridLog"></div>
+      </div>
+    </div>
+
+    <div id="panel-ai" class="grid panel" style="display:none">
+      <div class="card">
+        <h3>AI Console</h3>
+        <div class="badges">
+          <div class="pill" onclick="sendCmd('design phone with 6.7\" OLED and AI lens')">Design Phone</div>
+          <div class="pill" onclick="sendCmd('optimize ray tracing for 60fps at 1440p')">Optimize RT</div>
+          <div class="pill" onclick="sendCmd('simulate autonomous car safety for urban route')">Car Safety</div>
+          <div class="pill" onclick="sendCmd('generate film scene with volumetric fog and neon city')">Film Scene</div>
+        </div>
+        <div class="row"><label>Command</label><input id="cmd" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--edge);background:#0d1436;color:#e7efff" placeholder="Type a command (e.g., design laptop with dual GPU)"></div>
+        <div class="row" style="justify-content:flex-end;gap:10px">
+          <button class="btn secondary" onclick="clearConsole()">Clear</button>
+          <button class="btn" onclick="runCmd()">Run</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Console Output</h3>
+        <div class="console" id="aiLog"></div>
+      </div>
+    </div>
+
+    <div class="footer">Botimox Prototype • All outputs are simulated for demonstration • © Botimox</div>
+  </div>
+
+<script>
+// Tab switching
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const sel = t.dataset.tab;
+    document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+    document.getElementById('panel-'+sel).style.display='grid';
+  });
+});
+
+function syncVal(id,v){ document.getElementById(id).textContent=v; }
+
+function randomize(){
+  const r=(id,min,max)=>{ const v=Math.floor(Math.random()*(max-min+1))+min; document.getElementById(id).value=v; syncVal(id+'Val',v); };
+  r('cpu',4,64); r('gpu',5,120); r('ram',8,128);
+  document.getElementById('rt').checked=Math.random()>.4;
+  document.getElementById('ai').checked=Math.random()>.3;
+}
+
+function predict(){
+  const cpu=+cpuElem().value, gpu=+gpuElem().value, ram=+ramElem().value;
+  const rt=rtElem().checked, ai=aiElem().checked;
+  // toy model for demo
+  let base = gpu*1.4 + cpu*0.9 + Math.min(ram,64)*0.2;
+  if(rt) base -= 18;
+  if(ai) base += 22;
+  const fps = Math.max(20, Math.round(base));
+  const therm = Math.min(95, Math.round(45 + gpu*0.25 + (rt?6:0) - (ai?3:0)));
+  const power = Math.max(35, Math.round(30 + gpu*0.8 + cpu*0.6 - (ai?10:0)));
+  const lat = Math.max(6, Math.round(18 - (ai?5:0) - (gpu/40)));
+  setText('fps', fps+' fps');
+  setText('therm', therm+' °C');
+  setText('power', power+' W');
+  setText('lat', lat+' ms');
+  const notes=document.getElementById('notes'); notes.innerHTML='';
+  addBadge(notes, rt? 'Ray Tracing: ON (visual boost, perf cost)':'Ray Tracing: OFF (higher FPS)');
+  addBadge(notes, ai? 'AI Boost: ON (smarter upscaling & scheduling)':'AI Boost: OFF');
+  addBadge(notes, 'Preset sampled • Results simulated');
+}
+
+function scaffold(){
+  const tpl = document.getElementById('template').value;
+  const tgt = document.getElementById('target').value;
+  const fid = +document.getElementById('fidelity').value;
+  const out = [
+    `Scaffolding ${tpl} for ${tgt}…`,
+    `• Assets: world/characters/shaders (fidelity ${fid}/10)`,
+    `• Build settings: ${tgt} optimized, DLSS/FSR hooks`,
+    `• AI NPC pack: level ${Math.max(3, Math.round(fid*0.8))}`,
+    `• Estimated prototype time: ${Math.max(2, 12 - Math.round(fid/2))} days`,
+    `Done.`
+  ].join('\n');
+  document.getElementById('createLog').textContent = out;
+  consoleLog('create', 'Project scaffolded');
+}
+
+function hybrid(){
+  const scene = +document.getElementById('scene').value;
+  const npc = +document.getElementById('npc').value;
+  const net = document.getElementById('net').value;
+  const build = Math.max(12, Math.round(60 - scene*3 - npc*2));
+  const hfps = Math.max(24, Math.round(70 - scene*4 + npc));
+  const gutil = Math.min(99, 35 + scene*5 + (net==='Cloud Assist'?8:0));
+  const qix = Math.min(100, 60 + npc*4 + scene*3);
+  setText('build', build+' s'); setText('hfps', hfps+' fps'); setText('gutil', gutil+'%'); setText('qix', qix+'/100');
+  consoleLog('hybrid', `Hybrid run — Build: ${build}s, FPS: ${hfps}, GPU Util: ${gutil}%, Quality: ${qix}/100`);
+}
+
+function sendCmd(text){ document.getElementById('cmd').value = text; runCmd(); }
+function runCmd(){
+  const cmd = document.getElementById('cmd').value.trim(); if(!cmd) return;
+  const out = `[${new Date().toLocaleTimeString()}] > ${cmd}\n`+
+              `→ Simulated plan: tokens=~${Math.round(300+Math.random()*500)}, steps=~${3+Math.round(Math.random()*4)}\n`+
+              `→ Result preview ready (prototype)`;
+  appendConsole(out);
+}
+function clearConsole(){ document.getElementById('aiLog').textContent=''; }
+function consoleLog(which,msg){
+  const el = which==='hybrid' ? document.getElementById('hybridLog') : document.getElementById('createLog');
+  el.textContent += (el.textContent? '\n':'') + `[${new Date().toLocaleTimeString()}] ${msg}`;
+}
+function appendConsole(t){ const el=document.getElementById('aiLog'); el.textContent += (el.textContent? '\n':'') + t; el.scrollTop = el.scrollHeight; }
+function setText(id,txt){ document.getElementById(id).textContent = txt; }
+const cpuElem=()=>document.getElementById('cpu');
+const gpuElem=()=>document.getElementById('gpu');
+const ramElem=()=>document.getElementById('ram');
+const rtElem =()=>document.getElementById('rt');
+const aiElem =()=>document.getElementById('ai');
+</script>
+</body>
+</html>
